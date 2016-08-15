@@ -25,8 +25,14 @@ def collect_property(datasets, prop = None):
                 r = client.search(property=prop, data_set_id=ds, from_record=start, per_page=100)
             else:
                 r = client.search(data_set_id=ds, from_record=start, per_page=100)
-            size = len(r.json()['results'])
-            records += (r.json()['results'])
+            try:
+                parsed = r.json()
+            except ValueError:
+                print "Failed on ", prop, ds, start
+                continue
+
+            size = len(parsed['results'])
+            records += (parsed['results'])
             start += size
             time.sleep(3) # Remember to sleep to avoid rate limiting!
             print ".",
@@ -53,7 +59,8 @@ def recurse_names(obj):
 
 ndata = len(datasets)
 block = 50
-for i in range(0, ndata, block):
+start = 1250
+for i in range(start, ndata, block):
     rmin = i
     rmax = min(rmin+block, ndata)
     records = collect_property(datasets[rmin:rmax])
