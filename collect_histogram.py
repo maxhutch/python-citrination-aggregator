@@ -18,6 +18,7 @@ def collect_property(datasets, prop = None):
     if prop is not None:
         print "Searching for " + prop
     for ds in datasets:
+        print "Starting ds=", ds
         size = 1
         start = 0
         while size > 0 and start < max_records:
@@ -59,12 +60,14 @@ def recurse_names(obj):
 
 ndata = len(datasets)
 block = 50
-start = 1250
+start = 3200
 for i in range(start, ndata, block):
     rmin = i
     rmax = min(rmin+block, ndata)
-    records = collect_property(datasets[rmin:rmax])
-    record_contents = [recurse_names(x) for x in records]
+    record_contents = []
+    for j in range(block):
+      records = collect_property(datasets[rmin+j:rmax+j+1])
+      record_contents += [recurse_names(x) for x in records]
     with open("./hist_data-{:09d}.json".format(rmin), "w") as f:
         dump(record_contents, f)
 
