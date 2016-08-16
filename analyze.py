@@ -35,12 +35,39 @@ for fname in argv[1:]:
 
 
 import pandas
-keyset_list = sorted(keyset_counts.items(), key=operator.itemgetter(1))
 key_list = sorted(key_counts.items(), key=operator.itemgetter(1))
+keyset_list = sorted(keyset_counts.items(), key=operator.itemgetter(1))
 keyset_list.reverse()
 key_list.reverse()
-#sorted_x = dict(sorted(counts, key=operator.itemgetter(1)))
-#print dumps(sorted_x, indent=2)
+
+with open('key_frequencies.txt', 'w') as f:
+    for key, freq in key_list:
+        print key, freq
+        toprint = u"{}, {}\n".format(key, freq)
+        f.write(toprint.encode("utf8"))
+
+print sum([x[1] for x in keyset_list])
+
+sorted_keys = [x[0] for x in key_list if x[1] > 100]
+nkeys = len(sorted_keys)
+new_keysets = {frozenset(x) : key_counts[x] for x in key_counts} 
+old = new_keysets.copy()
+for level in range(2,3):
+    new = {}
+    for i in range(nkeys):
+        k1 = sorted_keys[i]
+        for ks in old:
+            if ks | set(k1) in new:
+                continue
+            count = 0
+            for data in keyset_counts:
+                if k1 in data and ks.issubset(data):
+                    count += keyset_counts[data]
+            count *= level
+            if count > key_counts[k1] and count > old[ks]:
+                new[ks | set(k1)] = count
+    old = new
+    new_keysets.update(new)
 
 M = 20 #len(key_counts)
 indM = np.arange(M)
@@ -62,7 +89,19 @@ ind = np.arange(N)
 plt.figure()
 plt.bar(ind, [x[1] for x in keyset_list][0:N])
 plt.xticks(ind + .5, labels[0:N], rotation=90)
-plt.tight_layout()
+#plt.tight_layout()
 plt.savefig("keysets.png")
+
+new_keyset_list = sorted(new_keysets.items(), key=operator.itemgetter(1))
+new_keyset_list.reverse()
+
+N = 5 #len(keyset_counts)
+ind = np.arange(N)
+
+plt.figure()
+plt.bar(ind, [x[1] for x in new_keyset_list][0:N])
+plt.xticks(ind + .5, [x[0] for x in new_keyset_list][0:N], rotation=90)
+plt.tight_layout()
+plt.savefig("new_keysets.png")
 
 
